@@ -3,18 +3,18 @@ module Battle
     # Hook for handling the Neurotranmission ability
     SwitchHandler.register_switch_event_hook('PSDK switch: Memory Link effect') do |handler, who, with|
       has_ability = ->(battler) { battler.has_ability?(:memory_link) }
-      all_users = (handler.logic.all_alive_battlers + [who, with]).uniq.select { |battler| has_ability.call(battler) }
-      log_data("all_users: #{all_users}")
+      users = (handler.logic.all_alive_battlers + [who, with]).uniq.select { |battler| has_ability.call(battler) }
+      log_data("users: #{users}")
 
       if who != with && has_ability.call(who)
         who.ability_effect.on_switch_event(handler, who, with)
         handler.pre_checked_effects << who.ability_effect
-        all_users.reject! { |battler| battler == who }
+        users.reject! { |battler| battler == who }
       end
 
-      all_users.sort_by!(&:spd).reverse!
+      users.sort_by!(&:spd).reverse!
 
-      all_users.each do |battler|
+      users.each do |battler|
         battler.ability_effect.on_switch_event(handler, battler, battler)
         handler.pre_checked_effects << battler.ability_effect
       end
