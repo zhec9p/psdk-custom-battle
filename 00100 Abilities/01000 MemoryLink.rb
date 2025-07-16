@@ -1,6 +1,6 @@
 module Battle
   class Logic
-    # Hook for handling the Neurotranmission ability
+    # Hook for handling the Memory Link ability
     SwitchHandler.register_switch_event_hook('PSDK switch: Memory Link effect') do |handler, who, with|
       has_ability = ->(battler) { battler.has_ability?(:memory_link) }
       users = (handler.logic.all_alive_battlers + [who, with]).uniq.select { |battler| has_ability.call(battler) }
@@ -20,9 +20,7 @@ module Battle
       end
     end
   end
-end
 
-module Battle
   module Effects
     class Ability
       class MemoryLink < Ability
@@ -91,7 +89,7 @@ module Battle
         # @param user [PFM::PokemonBattler] Ability holder
         def add_baton_passes_around(user)
           log_data("#{user}: #{__method__}")
-          return unless user == @target
+          return if user != @target
 
           unless activated?
             @logic.scene.visual.show_ability(user)
