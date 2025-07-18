@@ -89,7 +89,6 @@ module Battle
         # @param user [PFM::PokemonBattler] Ability holder
         def add_baton_passes_around(user)
           log_data("#{user}: #{__method__}")
-          return if user != @target
 
           unless activated?
             @logic.scene.visual.show_ability(user)
