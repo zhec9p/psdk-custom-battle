@@ -59,7 +59,8 @@ module Battle
 
       attacking_foe = targets.any? { |t| user.bank != t.bank }
       actual_targets = targets.clone
-      actual_targets += logic.adjacent_foes_of(user) if %i[adjacent_foe random_foe].include?(target)
+      actual_targets += logic.foes_of(user) if target == :random_foe
+      actual_targets += logic.adjacent_foes_of(user) if target == :adjacent_foe
       actual_targets += logic.adjacent_allies_of(user) if target == :adjacent_ally
       actual_targets += logic.adjacent_allies_of(user) + [user] if target == :user_or_adjacent_ally
       actual_targets += logic.send(attacking_foe ? :adjacent_foes_of : :adjacent_allies_of, user) if target == :adjacent_pokemon
