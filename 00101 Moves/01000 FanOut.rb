@@ -69,17 +69,17 @@ module Battle
       return actual_targets.uniq
     end
 
-    alias zhec_fan_out_initialize initialize
+    alias zhec_fan_out__initialize initialize
     def initialize(...)
-      zhec_fan_out_initialize(...)
+      zhec_fan_out__initialize(...)
       @fanned_out = false
     end
 
-    alias zhec_fan_out_calc_mod1_tvt calc_mod1_tvt
+    alias zhec_fan_out__calc_mod1_tvt calc_mod1_tvt
     def calc_mod1_tvt(...)
       return 0.75 if @fanned_out
 
-      return zhec_fan_out_calc_mod1_tvt(...)
+      return zhec_fan_out__calc_mod1_tvt(...)
     end
 
     register(:s_fan_out, FanOut)

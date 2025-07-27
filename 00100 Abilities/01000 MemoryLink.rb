@@ -1,6 +1,5 @@
 module Battle
   class Logic
-    # Hook for handling the Memory Link ability
     SwitchHandler.register_switch_event_hook('PSDK switch: Memory Link effect') do |handler, who, with|
       has_ability = ->(battler) { battler.has_ability?(:memory_link) }
       users = (handler.logic.all_alive_battlers + [who, with]).uniq.select { |battler| has_ability.call(battler) }
@@ -80,7 +79,6 @@ module Battle
         def activated?
           return @activated
         end
-
         alias activated activated?
 
         private
