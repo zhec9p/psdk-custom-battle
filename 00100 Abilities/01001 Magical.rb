@@ -174,33 +174,36 @@ module PFM
   class PokemonBattler
     attr_reader :magical
 
-    # List of @battle_properties to copy with Magical for applicable creatures
-    MAGICAL_BP_METHODS = %i[
+    MAGICAL_BATTLE_PROPERTIES = %i[
       id form weight height type1 type2
       atk_basis dfe_basis ats_basis dfs_basis spd_basis
     ]
 
-    # Setter cache for the Magical properties to write
-    MAGICAL_SETTER_CACHE = MAGICAL_BP_METHODS.to_h { |key| [key, :"#{key}="] }
+    MAGICAL_SETTERS = MAGICAL_BATTLE_PROPERTIES.to_h { |key| [key, :"#{key}="] }
 
     # Transform this creature into another creature or form
     # @param creature [PFM::Pokemon, nil]
     def magical=(creature)
+      old_max_hp = max_hp
       @magical = creature
       copy_magical_properties
+
+      # This is to avoid potentially coming up with +/-1 in current HP after calculations when max HP is the same.
+      return if max_hp == old_max_hp
 
       @hp = [1, (@hp_rate * max_hp).round].max
       @hp_rate = @hp.to_f / max_hp
     end
 
+    # Copy the properties of a gender-transformed creature
     def copy_magical_properties
       if @magical
-        @battle_properties_before_magical = MAGICAL_BP_METHODS.map { |getter| send(getter) }
-        MAGICAL_SETTER_CACHE.each { |getter, setter| send(setter, @magical.send(getter)) }
+        @battle_properties_before_magical = MAGICAL_BATTLE_PROPERTIES.map { |getter| send(getter) }
+        MAGICAL_SETTERS.each { |getter, setter| send(setter, @magical.send(getter)) }
 
       elsif @battle_properties_before_magical
-        MAGICAL_BP_METHODS.map.with_index do |key, index|
-          send(MAGICAL_SETTER_CACHE[key], @battle_properties_before_magical[index])
+        MAGICAL_BATTLE_PROPERTIES.map.with_index do |key, index|
+          send(MAGICAL_SETTERS[key], @battle_properties_before_magical[index])
         end
         @battle_properties_before_magical = nil
       end
@@ -239,6 +242,7 @@ module PFM
     alias zhec_magical__cry cry
     def cry
       return @magical&.cry if @magical
+
       return zhec_magical__cry
     end
   end
