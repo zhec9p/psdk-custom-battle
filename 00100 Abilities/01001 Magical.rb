@@ -1,13 +1,4 @@
 module Battle
-  class Logic
-    class TransformHandler
-      alias zhec_magical__can_transform? can_transform?
-      def can_transform?(target)
-        return !target.magical && zhec_magical__can_transform?(target)
-      end
-    end
-  end
-
   module Effects
     class Ability
       class Magical < Ability
@@ -86,24 +77,23 @@ module Battle
           handler.scene.display_message_and_wait(message(who))
         end
 
-        # Get a creature's opposite gender
+        # Get the gender opposite of a battler's
         # @param target [PFM::PokemonBattler]
         # @return [Integer]
         def opposite_gender(target)
           return [0, 2, 1].index(target.gender)
         end
 
-        # Whether the creature's gender can be changed
+        # Whether a battler's gender can be changed
         # @param target [PFM::PokemonBattler]
         # @return [Boolean]
-        # @note 100% male/female species are immune, but genderless species aren't
         def can_change_gender(handler, target)
           return false if target.db_symbol == :ditto
 
           return true
         end
 
-        # Transforms a creature into the creature or form of the opposite gender
+        # Transforms a battler into the creature or form of the opposite gender
         # @param handler [Battle::Logic::ChangeHandlerBase]
         # @param target [PFM::PokemonBattler]
         def gender_transform(handler, target)
@@ -131,6 +121,11 @@ module Battle
           end
         end
 
+        # Get a new creature the target should transform into
+        # @param target [PFM::PokemonBattler]
+        # @param species [Symbol] Symbol of the new creature
+        # @param form [Integer] Form of the new creature
+        # @return [PFM::Pokemon]
         def new_creature(target, species, form)
           creature = PFM::Pokemon.new(species, target.level, target.shiny?, !target.shiny?, form, {
             gender: target.gender
@@ -149,7 +144,7 @@ module Battle
           return GENDER_MOVES.include?(move.db_symbol)
         end
 
-        # Message when a creature's gender is changed
+        # Message when a battler's gender is changed
         # @param target [PFM::PokemonBattler]
         # @return [String]
         def message(target)
@@ -178,25 +173,33 @@ module Battle
       end
     end
   end
+
+  class Logic
+    class TransformHandler
+      alias zhec_magical__can_transform? can_transform?
+      def can_transform?(target)
+        return !target.magical && zhec_magical__can_transform?(target)
+      end
+    end
+  end
 end
 
 module PFM
   class PokemonBattler
     attr_reader :magical
 
-    # Don't include :ability in these properties. Ability change is handled elsewhere with AbilityChangeHandler.
+    # Don't include :ability in these properties. Magical does ability changes elsewhere.
     MAGICAL_BATTLE_PROPERTIES = %i[id form gender shiny weight height type1 type2]
-
     MAGICAL_SETTERS = MAGICAL_BATTLE_PROPERTIES.to_h { |key| [key, :"#{key}="] }
 
-    # Transform this creature into another creature or form
+    # Transform this battler into another creature or form
     # @param creature [PFM::Pokemon, nil]
     def magical=(creature)
       old_max_hp = max_hp
       @magical = creature
       copy_magical_properties
 
-      # This is to avoid potentially coming up with +/-1 in current HP after calculations when max HP is the same.
+      # To avoid potentially coming up with +/-1 in current HP after calculations when max HP is the same.
       return if max_hp == old_max_hp
 
       @hp = [1, (@hp_rate * max_hp).round].max
