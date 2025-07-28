@@ -11,26 +11,6 @@ module Battle
   module Effects
     class Ability
       class Magical < Ability
-        def self.link(m:, f:, m2f: true, f2m: true)
-          hash = {}
-          hash[m] = f if m2f
-          hash[f] = m if f2m
-          return hash
-        end
-
-        GENDER_LINES = {}.merge(
-          link(m: [:basculegion, 0], f: [:basculegion, 1]),
-          link(m: [:meowstic, 0],    f: [:meowstic, 1]),
-          link(m: [:indeedee, 0],    f: [:indeedee, 1]),
-          link(m: [:oinkologne, 0],  f: [:oinkologne, 1]),
-          link(m: [:nidoranm, 0],    f: [:nidoranf, 0]),
-          link(m: [:nidorino, 0],    f: [:nidorina, 0]),
-          link(m: [:nidoking, 0],    f: [:nidoqueen, 0]),
-          link(m: [:gallade, 0],     f: [:gardevoir, 0],    f2m: false),
-          link(m: [:glalie, 0],      f: [:froslass, 0],     m2f: false),
-          link(m: [:mothim, 0],      f: [:wormadam, 0])
-        )
-
         # Function called when a creature has actually switched with another one
         # @param handler [Battle::Logic::SwitchHandler]
         # @param _who [PFM::PokemonBattler] Creature that is switched out
@@ -50,12 +30,46 @@ module Battle
         # @return [Proc, nil]
         def on_move_priority_change(user, priority, move)
           return nil if user != @target
-          return nil unless gender_moves.include?(move.db_symbol)
+          return nil unless gender_move?(move)
 
           return priority + 2
         end
 
         private
+
+        class << self
+          private
+
+          # Configuration helper to allow the ability to transform gendered species/forms their gender counterparts
+          # @param m [Array<Symbol, Integer>] Symbol and form of a male species/form
+          # @param f [Array<Symbol, Integer>] Symbol and form of a female species/form
+          # @param m2f [Boolean]: Whether the ability can transform the male species/form into the female one
+          # @param f2m [Boolean]: Whether the ability can transform the female species/form into the male one
+          # @return [Hash] Transformation configuration to be added to GENDER_LINES
+          def link(m:, f:, m2f: true, f2m: true)
+            hash = {}
+            hash[m] = f if m2f
+            hash[f] = m if f2m
+            return hash
+          end
+        end
+
+        # Gendered species/forms that the ability can transform into their gender counterparts
+        GENDER_LINES = {}.merge(
+          link(m: [:basculegion, 0], f: [:basculegion, 1]),
+          link(m: [:meowstic, 0],    f: [:meowstic, 1]),
+          link(m: [:indeedee, 0],    f: [:indeedee, 1]),
+          link(m: [:oinkologne, 0],  f: [:oinkologne, 1]),
+          link(m: [:nidoranm, 0],    f: [:nidoranf, 0]),
+          link(m: [:nidorino, 0],    f: [:nidorina, 0]),
+          link(m: [:nidoking, 0],    f: [:nidoqueen, 0]),
+          link(m: [:gallade, 0],     f: [:gardevoir, 0],    f2m: false),
+          link(m: [:glalie, 0],      f: [:froslass, 0],     m2f: false),
+          link(m: [:mothim, 0],      f: [:wormadam, 0])
+        )
+
+        # List of moves with gender-based effects
+        GENDER_MOVES = %i[attract captivate gmax_cuddle]
 
         # Changes a creature's gender to another creature's opposite gender
         # @param handler [Battle::Logic::TransformHandler]
@@ -112,31 +126,27 @@ module Battle
           handler.scene.visual.show_switch_form_animation(target)
 
           if old_ability != target.battle_ability_db_symbol
-            target.ability_effect.on_switch_event(handler.logic.switch_handler, target, target)
+            switch_handler = handler.logic.switch_handler
+            target.ability_effect.on_switch_event(switch_handler, target, target)
           end
         end
 
         def new_creature(target, species, form)
           creature = PFM::Pokemon.new(species, target.level, target.shiny?, !target.shiny?, form, {
-            nature:  target.nature_db_symbol,
-            gender:  target.gender,
-            stats:   [target.iv_hp, target.iv_atk, target.iv_dfe, target.iv_spd, target.iv_ats, target.iv_dfs],
-            bonus:   [target.ev_hp, target.ev_atk, target.ev_dfe, target.ev_spd, target.ev_ats, target.ev_dfs]
+            gender: target.gender
           })
 
-          log_data("creature.ability_index = #{creature.ability_index}")
-          log_data("creature.ability_db_symbol = #{creature.ability_db_symbol}")
           creature.ability_index = target.original.ability_index
-          log_data("creature.ability_index = #{creature.ability_index}")
           creature.update_ability
-          log_data("creature.ability_db_symbol = #{creature.ability_db_symbol}")
           return creature
         end
 
-        # List of moves with gender-based moves
-        # @return [Array<Symbol>]
-        def gender_moves
-          return %i[attract captivate gmax_cuddle]
+        # Whether a move has a gender-based effect
+        # @param move [Battle::Move]
+        # @return [Boolean]
+        # @todo Make this function a gender? method for Battle::Move instead.
+        def gender_move?(move)
+          return GENDER_MOVES.include?(move.db_symbol)
         end
 
         # Message when a creature's gender is changed
@@ -174,10 +184,8 @@ module PFM
   class PokemonBattler
     attr_reader :magical
 
-    MAGICAL_BATTLE_PROPERTIES = %i[
-      id form weight height type1 type2
-      atk_basis dfe_basis ats_basis dfs_basis spd_basis
-    ]
+    # Don't include :ability in these properties. Ability change is handled elsewhere with AbilityChangeHandler.
+    MAGICAL_BATTLE_PROPERTIES = %i[id form gender shiny weight height type1 type2]
 
     MAGICAL_SETTERS = MAGICAL_BATTLE_PROPERTIES.to_h { |key| [key, :"#{key}="] }
 
@@ -221,13 +229,15 @@ module PFM
       copy_magical_properties if @magical
     end
 
+    alias zhec_magical__copy_properties_back_to_original copy_properties_back_to_original
     def copy_properties_back_to_original
+      return zhec_magical__copy_properties_back_to_original unless @magical
       return if @scene.battle_info.max_level
 
       @battle_properties.clear
       self.transform = nil
-      self.illusion = nil
       self.magical = nil
+      self.illusion = nil
       original = @original
 
       BACK_PROPERTIES.each do |ivar_name|
@@ -244,6 +254,54 @@ module PFM
       return @magical&.cry if @magical
 
       return zhec_magical__cry
+    end
+
+    alias zhec_magical__level_up_copy level_up_copy
+    def level_up_copy
+      return zhec_magical__level_up_copy unless @magical
+
+      self.level = @original.level
+      self.exp = @original.exp
+      return level_up_stat_refresh if @transform
+
+      @magical.level_up_stat_refresh
+      self.hp = [1, (@original.hp_rate * @magical.max_hp).round].max
+
+      %i[@ev_hp @ev_atk @ev_dfe @ev_spd @ev_ats @ev_dfs].each do |ivar_name|
+        instance_variable_set(ivar_name, original.instance_variable_get(ivar_name))
+      end
+    end
+  end
+end
+
+module BattleUI
+  module ExpDistributionAbstraction
+    alias zhec_magical__map_to_original_with_forms map_to_original_with_forms
+    def map_to_original_with_forms(battlers)
+      return zhec_magical__map_to_original_with_forms(battlers) if battlers.any? { |battler| battler.magical }
+      return @__original_pokemon if @__original_pokemon
+
+      @__original_forms = battlers.map { |battler| battler.original.form }
+      @__original_pokemon = battlers.map do |battler|
+        original = battler.original
+        original.instance_variable_set(:@form, battler.form) unless battler.transform || battler.magical || battler.illusion
+        next original
+      end
+
+      return @__original_pokemon
+    end
+
+    alias zhec_magical__show_level_up show_level_up
+    def show_level_up(battler)
+      return zhec_magical__show_level_up(battler) unless battler.magical
+
+      original = battler.original
+      original.hp = battler.hp unless battler.transform || battler.magical
+      battler.update_loyalty
+      list = original.level_up_stat_refresh
+      yield(original, list)
+      level_up_message(battler)
+      scene.logic.evolve_request << battler unless scene.logic.evolve_request.include?(battler)
     end
   end
 end
