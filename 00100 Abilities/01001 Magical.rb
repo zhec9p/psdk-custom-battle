@@ -67,11 +67,11 @@ module Battle
           return unless can_change_gender(handler, who)
 
           new_gender = opposite_gender(with)
-          return if who.gender == new_gender
+          return handler.scene.display_message_and_wait(unchanged_message(who)) if who.gender == new_gender
 
           who.gender = new_gender
           gender_transform(handler, who)
-          handler.scene.display_message_and_wait(message(who))
+          handler.scene.display_message_and_wait(changed_message(who))
         end
 
         # Get the gender opposite of a battler's
@@ -136,8 +136,15 @@ module Battle
         # Message when a battler's gender is changed
         # @param target [PFM::PokemonBattler]
         # @return [String]
-        def message(target)
+        def changed_message(target)
           return parse_text_with_pokemon(1000, 12, target)
+        end
+
+        # Message when a battler's gender is unchanged
+        # @param target [PFM::PokemonBattler]
+        # @return [String]
+        def unchanged_message(target)
+          return parse_text_with_pokemon(1000, 15, target)
         end
       end
 
