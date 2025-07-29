@@ -21,7 +21,7 @@ module Battle
         # @return [Proc, nil]
         def on_move_priority_change(user, priority, move)
           return nil if user != @target
-          return nil unless gender_move?(move)
+          return nil unless move.gender?
 
           return priority + 2
         end
@@ -58,9 +58,6 @@ module Battle
           link(m: [:glalie, 0],      f: [:froslass, 0],     m2f: false),
           link(m: [:mothim, 0],      f: [:wormadam, 0])
         )
-
-        # List of moves with gender-based effects
-        GENDER_MOVES = %i[attract captivate gmax_cuddle]
 
         # Changes a creature's gender to another creature's opposite gender
         # @param handler [Battle::Logic::TransformHandler]
@@ -134,14 +131,6 @@ module Battle
           creature.ability_index = target.original.ability_index
           creature.update_ability
           return creature
-        end
-
-        # Whether a move has a gender-based effect
-        # @param move [Battle::Move]
-        # @return [Boolean]
-        # @todo Make this function a gender? method for Battle::Move instead.
-        def gender_move?(move)
-          return GENDER_MOVES.include?(move.db_symbol)
         end
 
         # Message when a battler's gender is changed
