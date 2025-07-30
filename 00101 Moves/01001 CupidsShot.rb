@@ -19,6 +19,13 @@ module Battle
       def gender?
         return true
       end
+
+      # Play the move animation
+      # @param user [PFM::PokemonBattler] User of the move
+      # @param targets [Array<PFM::PokemonBattler>] Expected targets
+      def play_animation(user, targets)
+        Battle::Move.new(:attract, 0, 0, @scene).send(:play_animation, user, targets)
+      end
     end
 
     Move.register(:s_cupids_shot, CupidsShot)
