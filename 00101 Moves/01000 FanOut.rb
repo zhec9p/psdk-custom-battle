@@ -25,6 +25,13 @@ module Battle
         end
       end
 
+      # Play the move animation
+      # @param user [PFM::PokemonBattler] User of the move
+      # @param targets [Array<PFM::PokemonBattler>] Expected targets
+      def play_animation(user, targets)
+        Battle::Move.new(:charge, 0, 0, @scene).send(:play_animation, user, targets)
+      end
+
       private
 
       # Number of turns the effect works
