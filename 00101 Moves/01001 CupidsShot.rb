@@ -8,7 +8,6 @@ module Battle
       def deal_effect(user, actual_targets)
         return false unless super
 
-        log_data("teeeeeeest")
         actual_targets.each do |target|
           user.effects.add(Effects::CupidsShot.new(@logic, user, target))
         end
@@ -28,13 +27,13 @@ module Battle
       end
     end
 
-    Move.register(:s_cupids_shot, CupidsShot)
+    Move.register(:s_cupid_s_shot, CupidsShot)
   end
 
   module Effects
     # Class managing the effects of Cupid's Shot
     class CupidsShot < PokemonTiedEffectBase
-      # Create a new CupidsShot effect
+      # Create a new Cupid's Shot effect
       # @param logic [Battle::Logic]
       # @param user [PFM::PokemonBattler] User of the move
       # @param target [PFM::PokemonBattler] Target of the move

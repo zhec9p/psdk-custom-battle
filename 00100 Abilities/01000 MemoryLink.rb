@@ -3,7 +3,6 @@ module Battle
     SwitchHandler.register_switch_event_hook('PSDK switch: Memory Link effect') do |handler, who, with|
       has_ability = ->(battler) { battler.has_ability?(:memory_link) }
       users = (handler.logic.all_alive_battlers + [who, with]).uniq.select { |battler| has_ability.call(battler) }
-      log_data("Memory Link users: #{users}")
 
       if who != with && has_ability.call(who)
         who.ability_effect.on_switch_event(handler, who, with)
@@ -23,7 +22,7 @@ module Battle
   module Effects
     class Ability
       class MemoryLink < Ability
-        # Create a new MemoryLink effect
+        # Create a new Memory Link effect
         # @param logic [Battle::Logic]
         # @param target [PFM::PokemonBattler]
         # @param db_symbol [Symbol] db_symbol of the ability
@@ -79,7 +78,6 @@ module Battle
         def activated?
           return @activated
         end
-        alias activated activated?
 
         private
 

@@ -94,7 +94,7 @@ module Battle
 
   module Effects
     class FanOut < PokemonTiedEffectBase
-      # Create a new FanOut effect
+      # Create a new Fan Out effect
       # @param logic [Battle::Logic]
       # @param target [PFM::PokemonBattler]
       # @param duration [Integer] Number of turns the effect should last
