@@ -22,10 +22,9 @@ module Battle
   module Effects
     class Ability
       class MemoryLink < Ability
-        # Create a new Memory Link effect
         # @param logic [Battle::Logic]
         # @param target [PFM::PokemonBattler]
-        # @param db_symbol [Symbol] db_symbol of the ability
+        # @param db_symbol [Symbol]
         def initialize(logic, target, db_symbol)
           super
           @activated = false
@@ -33,8 +32,8 @@ module Battle
 
         # Function called when a creature has actually switched with another one
         # @param _handler [Battle::Logic::SwitchHandler]
-        # @param who [PFM::PokemonBattler] creature that is switched out
-        # @param with [PFM::PokemonBattler] creature that is switched in
+        # @param who [PFM::PokemonBattler]
+        # @param with [PFM::PokemonBattler]
         def on_switch_event(_handler, who, with)
           if who != with && who == @target
             delete_baton_passes_around(who)
@@ -45,10 +44,10 @@ module Battle
 
         # Function called after damages were applied and when target died (post_damage_death)
         # @param _handler [Battle::Logic::DamageHandler]
-        # @param _hp [Integer] number of hp (damage) dealt
+        # @param _hp [Integer]
         # @param target [PFM::PokemonBattler]
-        # @param _launcher [PFM::PokemonBattler, nil] Potential launcher of a move
-        # @param _skill [Battle::Move, nil] Potential move used
+        # @param _launcher [PFM::PokemonBattler, nil]
+        # @param _skill [Battle::Move, nil]
         def on_post_damage_death(_handler, _hp, target, _launcher, _skill)
           return unless activated?
 
@@ -64,8 +63,8 @@ module Battle
         # @param _handler [Battle::Logic::AbilityChangeHandler]
         # @param db_symbol [Symbol] Symbol ID of the ability to give
         # @param target [PFM::PokemonBattler]
-        # @param _launcher [PFM::PokemonBattler, nil] Potential launcher of a move
-        # @param _skill [Battle::Move, nil] Potential move used
+        # @param _launcher [PFM::PokemonBattler, nil]
+        # @param _skill [Battle::Move, nil]
         def on_pre_ability_change(_handler, db_symbol, target, _launcher, _skill)
           return if target != @target
           return if db_symbol == target.battle_ability_db_symbol
@@ -73,7 +72,7 @@ module Battle
           delete_baton_passes_around(target)
         end
 
-        # If this ability is currently activated
+        # Is this ability currently activated?
         # @return [Boolean]
         def activated?
           return @activated
@@ -82,7 +81,7 @@ module Battle
         private
 
         # Adds a Baton Pass effect to all surrounding battlers
-        # @param user [PFM::PokemonBattler] Ability holder
+        # @param user [PFM::PokemonBattler]
         def add_baton_passes_around(user)
           log_data("#{user}: #{__method__}")
 
@@ -98,7 +97,7 @@ module Battle
         end
 
         # Removes the Baton Pass effect from all surrounding battlers
-        # @param user [PFM::PokemonBattler] Ability holder
+        # @param user [PFM::PokemonBattler]
         def delete_baton_passes_around(user)
           log_data("#{user}: #{__method__}")
           return unless activated?

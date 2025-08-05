@@ -4,8 +4,8 @@ module Battle
       class Magical < Ability
         # Function called when a creature has actually switched with another one
         # @param handler [Battle::Logic::SwitchHandler]
-        # @param _who [PFM::PokemonBattler] Creature that is switched out
-        # @param with [PFM::PokemonBattler] Creature that is switched in
+        # @param _who [PFM::PokemonBattler]
+        # @param with [PFM::PokemonBattler]
         def on_switch_event(handler, _who, with)
           return if with != @target
 
@@ -31,12 +31,12 @@ module Battle
         class << self
           private
 
-          # Configuration helper to allow the ability to transform gendered species/forms their gender counterparts
+          # Helper to allow the ability to transform gendered species/forms their gender counterparts
           # @param m [Array<Symbol, Integer>] Symbol and form of a male species/form
           # @param f [Array<Symbol, Integer>] Symbol and form of a female species/form
-          # @param m2f [Boolean]: Whether the ability can transform the male species/form into the female one
-          # @param f2m [Boolean]: Whether the ability can transform the female species/form into the male one
-          # @return [Hash] Transformation configuration to be added to GENDER_LINES
+          # @param m2f [Boolean]: Can this ability transform the male species/form into the female one?
+          # @param f2m [Boolean]: Can this ability transform the female species/form into the male one?
+          # @return [Hash]
           def link(m:, f:, m2f: true, f2m: true)
             hash = {}
             hash[m] = f if m2f
@@ -61,27 +61,27 @@ module Battle
 
         # Changes a creature's gender to another creature's opposite gender
         # @param handler [Battle::Logic::TransformHandler]
-        # @param who [PFM::PokemonBattler] Creature to change the gender of
-        # @param with [PFM::PokemonBattler] Creature to get the opposite gender of
-        def change_gender(handler, who:, with:)
-          return unless can_change_gender(handler, who)
+        # @param target [PFM::PokemonBattler] Creature to change the gender of
+        # @param user [PFM::PokemonBattler] Creature to get the opposite gender of
+        def change_gender(handler, target:, user:)
+          return unless can_change_gender(handler, target)
 
-          new_gender = opposite_gender(with)
-          return handler.scene.display_message_and_wait(unchanged_message(who)) if who.gender == new_gender
+          new_gender = opposite_gender(user)
+          return handler.scene.display_message_and_wait(unchanged_message(target)) if target.gender == new_gender
 
-          who.gender = new_gender
-          gender_transform(handler, who)
-          handler.scene.display_message_and_wait(changed_message(who))
+          target.gender = new_gender
+          gender_transform(handler, target)
+          handler.scene.display_message_and_wait(changed_message(target))
         end
 
         # Get the gender opposite of a battler's
-        # @param target [PFM::PokemonBattler]
+        # @param user [PFM::PokemonBattler]
         # @return [Integer]
-        def opposite_gender(target)
-          return [0, 2, 1].index(target.gender)
+        def opposite_gender(user)
+          return [0, 2, 1].index(user.gender)
         end
 
-        # Whether a battler's gender can be changed
+        # Can this battler's gender can be changed?
         # @param target [PFM::PokemonBattler]
         # @return [Boolean]
         def can_change_gender(handler, target)
@@ -120,8 +120,8 @@ module Battle
 
         # Get a new creature the target should transform into
         # @param target [PFM::PokemonBattler]
-        # @param species [Symbol] Symbol of the new creature
-        # @param form [Integer] Form of the new creature
+        # @param species [Symbol] New creature symbol
+        # @param form [Integer] New form
         # @return [PFM::Pokemon]
         def new_creature(target, species, form)
           creature = PFM::Pokemon.new(species, target.level, target.shiny?, !target.shiny?, form, {
@@ -154,8 +154,8 @@ module Battle
     class Magical < PokemonTiedEffectBase
       # Function called when a creature has actually switched with another one
       # @param _handler [Battle::Logic::SwitchHandler]
-      # @param who [PFM::PokemonBattler] Creature that is switched out
-      # @param with [PFM::PokemonBattler] Creature that is switched in
+      # @param who [PFM::PokemonBattler]
+      # @param with [PFM::PokemonBattler]
       def on_switch_event(_handler, who, with)
         return if who != @pokemon || with == @pokemon
 
@@ -184,7 +184,7 @@ module PFM
   class PokemonBattler
     attr_reader :magical
 
-    # Don't include :ability in these properties. Magical does ability changes elsewhere.
+    # Don't include :ability in these properties. Magical does the ability changes elsewhere.
     MAGICAL_BATTLE_PROPERTIES = %i[id form gender shiny weight height type1 type2]
     MAGICAL_SETTERS = MAGICAL_BATTLE_PROPERTIES.to_h { |key| [key, :"#{key}="] }
 
@@ -277,7 +277,7 @@ module BattleUI
   module ExpDistributionAbstraction
     alias zhec_magical__map_to_original_with_forms map_to_original_with_forms
     def map_to_original_with_forms(battlers)
-      return zhec_magical__map_to_original_with_forms(battlers) if battlers.any? { |battler| battler.magical }
+      return zhec_magical__map_to_original_with_forms(battlers) if battlers.any?(&:magical)
       return @__original_pokemon if @__original_pokemon
 
       @__original_forms = battlers.map { |battler| battler.original.form }

@@ -2,34 +2,33 @@ module Battle
   module Effects
     class Ability
       class SpiderSilk < Ability
-        # Create a new Spider Silk effect
         # @param logic [Battle::Logic]
         # @param target [PFM::PokemonBattler]
-        # @param db_symbol [Symbol] db_symbol of the item
+        # @param db_symbol [Symbol]
         def initialize(logic, target, db_symbol)
           super
           @attacked = []
         end
 
         # Function called before the accuracy check of a move is done
-        # @param logic [Battle::Logic] Logic of the battle
-        # @param scene [Battle::Scene] Battle scene
-        # @param targets [PFM::PokemonBattler]
-        # @param launcher [PFM::PokemonBattler, nil] Potential launcher of a move
-        # @param skill [Battle::Move, nil] Potential move used
-        def on_pre_accuracy_check(logic, scene, targets, launcher, skill)
+        # @param _logic [Battle::Logic]
+        # @param _scene [Battle::Scene]
+        # @param _targets [Array<PFM::PokemonBattler>]
+        # @param launcher [PFM::PokemonBattler, nil]
+        # @param _skill [Battle::Move, nil]
+        def on_pre_accuracy_check(_logic, _scene, _targets, launcher, _skill)
           return if launcher != @target
 
           @attacked.clear
         end
 
         # Function called after the accuracy check of a move is done (and the move should land)
-        # @param logic [Battle::Logic] Logic of the battle
-        # @param scene [Battle::Scene] Battle scene
-        # @param targets [Array<PFM::PokemonBattler>] Expected targets
-        # @param launcher [PFM::PokemonBattler, nil] Potential launcher of a move
-        # @param skill [Battle::Move, nil] Potential move used
-        def on_post_accuracy_check(logic, scene, targets, launcher, skill)
+        # @param _logic [Battle::Logic]
+        # @param _scene [Battle::Scene]
+        # @param targets [Array<PFM::PokemonBattler>]
+        # @param launcher [PFM::PokemonBattler, nil]
+        # @param skill [Battle::Move, nil]
+        def on_post_accuracy_check(_logic, _scene, targets, launcher, skill)
           return if launcher != @target
           return unless skill&.web? && skill&.db_symbol != :sticky_web
 
@@ -37,8 +36,8 @@ module Battle
         end
 
         # Function called at the end of an action
-        # @param logic [Battle::Logic] Logic of the battle
-        # @param scene [Battle::Scene] Battle scene
+        # @param logic [Battle::Logic]
+        # @param scene [Battle::Scene]
         # @param battlers [Array<PFM::PokemonBattler>] All alive battlers
         def on_post_action_event(logic, scene, battlers)
           return unless battlers.include?(@target)
@@ -49,8 +48,8 @@ module Battle
           @attacked.uniq!
 
           @attacked.each do |battler|
-            logic.stat_change_handler.stat_change_with_process(:eva, -1, battler, @target)
-            battler.effects.add(Effects::SpiderSilkMark.new(logic, battler)) unless battler.effects.has?(:spider_silk_mark)
+            logic.stat_change_handler.stat_change_with_process(:eva, -2, battler, @target)
+            battler.effects.add(Effects::SpiderSilk.new(logic, battler)) unless battler.effects.has?(:spider_silk)
           end
 
           @attacked.clear
@@ -71,12 +70,11 @@ module Battle
         handler.scene.visual.show_ability(origin)
         launcher = with.has_ability?(:mirror_armor) ? origin : nil
         handler.logic.stat_change_handler.stat_change_with_process(:eva, -1, with, launcher)
-        with.effects.add(Effects::SpiderSilkMark.new(handler.logic, with)) unless with.effects.has?(:spider_silk_mark)
+        with.effects.add(Effects::SpiderSilk.new(handler.logic, with)) unless with.effects.has?(:spider_silk)
       end
     end
 
-    class SpiderSilkMark < PokemonTiedEffectBase
-      # Create a new SpiderSilkMark effect
+    class SpiderSilk < PokemonTiedEffectBase
       # @param logic [Battle::Logic]
       # @param target [PFM::PokemonBattler]
       def initialize(logic, target)
@@ -87,27 +85,27 @@ module Battle
       # Get the name of the effect
       # @return [Symbol]
       def name
-        return :spider_silk_mark
+        return :spider_silk
       end
 
-      # Chance of the OHKO move hitting
-      # @param user [PFM::PokemonBattler] User of the move
-      # @param target [PFM::PokemonBattler] Target of the move
+      # Get the chance of the OHKO move hitting
+      # @param user [PFM::PokemonBattler]
+      # @param target [PFM::PokemonBattler]
       # @param move [Battle::Move]
       # @return [Float]
       def ohko_chance(user, target, move)
         return 0 unless move.ohko?
         return move.zhec_battle__chance_of_hit(user, target) if target != @pokemon
 
-        # 30% baseline for higher level is intentional
+        # Higher-level creatures are no longer immune.
         chance = [0, user.level - target.level].max + 30
-        chance *= move.evasion_mod(target)
+        chance *= move.evasion_mod(target) if target.eva_stage <= 0
         return chance
       end
 
       private
 
-      # Message to display when Spider Silk's OHKO chance effect is applied to the target
+      # Message for Spider Silk's OHKO chance effect
       # @param target [PFM::PokemonBattler]
       # @return [String]
       def message(target)
@@ -118,16 +116,10 @@ module Battle
 
   class Move
     class OHKO
-      # Tell if the move is an OHKO move
-      # @return [Boolean]
-      def ohko?
-        return true
-      end
-
       alias zhec_battle__chance_of_hit chance_of_hit
       def chance_of_hit(user, target)
         chance = zhec_battle__chance_of_hit(user, target)
-        effect = target.effects.get(:spider_silk_mark)
+        effect = target.effects.get(:spider_silk)
         return chance unless effect && chance < 100
 
         return effect.ohko_chance(user, target, self)

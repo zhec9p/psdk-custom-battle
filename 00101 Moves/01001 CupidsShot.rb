@@ -1,10 +1,9 @@
 module Battle
   class Move
-    # Class managing the Cupid's Shot move
     class CupidsShot < UTurn
       # Function that deals the effect to the battler
-      # @param user [PFM::PokemonBattler] User of the move
-      # @param actual_targets [Array<PFM::PokemonBattler>] targets that will be affected by the move
+      # @param user [PFM::PokemonBattler]
+      # @param actual_targets [Array<PFM::PokemonBattler>]
       def deal_effect(user, actual_targets)
         return false unless super
 
@@ -13,15 +12,15 @@ module Battle
         end
       end
 
-      # Does the skill have a gender-related effect?
+      # Is this a gender-affected move?
       # @return [Boolean]
       def gender?
         return true
       end
 
       # Play the move animation
-      # @param user [PFM::PokemonBattler] User of the move
-      # @param targets [Array<PFM::PokemonBattler>] Expected targets
+      # @param user [PFM::PokemonBattler]
+      # @param targets [Array<PFM::PokemonBattler>]
       def play_animation(user, targets)
         Battle::Move.new(:attract, 0, 0, @scene).send(:play_animation, user, targets)
       end
@@ -31,12 +30,10 @@ module Battle
   end
 
   module Effects
-    # Class managing the effects of Cupid's Shot
     class CupidsShot < PokemonTiedEffectBase
-      # Create a new Cupid's Shot effect
       # @param logic [Battle::Logic]
-      # @param user [PFM::PokemonBattler] User of the move
-      # @param target [PFM::PokemonBattler] Target of the move
+      # @param user [PFM::PokemonBattler]
+      # @param target [PFM::PokemonBattler]
       def initialize(logic, user, target)
         super(logic, user)
         @target = target
@@ -50,8 +47,8 @@ module Battle
 
       # Function called when a creature has actually switched with another one
       # @param handler [Battle::Logic::SwitchHandler]
-      # @param who [PFM::PokemonBattler] Creature that is switched out
-      # @param with [PFM::PokemonBattler] Creature that is switched in
+      # @param who [PFM::PokemonBattler]
+      # @param with [PFM::PokemonBattler]
       def on_switch_event(handler, who, with)
         return if who != @pokemon
         return kill unless @logic.all_alive_battlers.include?(@target) && @target.hp > 0
@@ -67,7 +64,7 @@ module Battle
 
       private
 
-      # Function that deals the Destiny Knot effect on the infatuator
+      # Deals the Destiny Knot effect to the infatuator
       # @param with [PFM::PokemonBattler]
       # @param target [PFM::PokemonBattler]
       def handle_destiny_knot_effect(with, target)

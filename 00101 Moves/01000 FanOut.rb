@@ -2,8 +2,8 @@ module Battle
   class Move
     class FanOut < Move
       # Function that tests if the user is able to use the move
-      # @param user [PFM::PokemonBattler] User of the move
-      # @param targets [Array<PFM::PokemonBattler>] Expected targets
+      # @param user [PFM::PokemonBattler]
+      # @param targets [Array<PFM::PokemonBattler>]
       # @note Thing that prevents the move from being used should be defined by :move_prevention_user Hook
       # @return [Boolean] If the procedure can continue
       def move_usable_by_user(user, _targets)
@@ -14,8 +14,8 @@ module Battle
       end
 
       # Function that deals the effect to the creature
-      # @param user [PFM::PokemonBattler] User of the move
-      # @param _actual_targets [Array<PFM::PokemonBattler>] Targets that will be affected by the move
+      # @param user [PFM::PokemonBattler]
+      # @param _actual_targets [Array<PFM::PokemonBattler>]
       def deal_effect(user, actual_targets)
         actual_targets.each do |target|
           next if target.effects.has?(:fan_out)
@@ -26,8 +26,8 @@ module Battle
       end
 
       # Play the move animation
-      # @param user [PFM::PokemonBattler] User of the move
-      # @param targets [Array<PFM::PokemonBattler>] Expected targets
+      # @param user [PFM::PokemonBattler]
+      # @param targets [Array<PFM::PokemonBattler>]
       def play_animation(user, targets)
         Battle::Move.new(:charge, 0, 0, @scene).send(:play_animation, user, targets)
       end
@@ -35,7 +35,7 @@ module Battle
       private
 
       # Number of turns the effect works
-      # @return Integer
+      # @return [Integer]
       def duration
         return 4
       end
@@ -49,8 +49,8 @@ module Battle
     end
 
     # Internal procedure of a FanOut-affected user's move
-    # @param user [PFM::PokemonBattler] User of the move
-    # @param targets [Array<PFM::PokemonBattler>] Expected targets
+    # @param user [PFM::PokemonBattler]
+    # @param targets [Array<PFM::PokemonBattler>] Initial targets
     def proceed_internal_fan_out(user, targets)
       actual_targets = fan_out_battler_targets(user, targets)
       @fanned_out = one_target? && actual_targets.length > targets.length
@@ -58,7 +58,7 @@ module Battle
     end
 
     # Convert a FanOut-affected user's single-target move to multi-target
-    # @param user [PFM::PokemonBattler] user of the move
+    # @param user [PFM::PokemonBattler]
     # @param targets [Array<PFM::PokemonBattler>] Initial targets
     # @return [Array<PFM::PokemonBattler>] New targets
     def fan_out_battler_targets(user, targets)
@@ -94,7 +94,6 @@ module Battle
 
   module Effects
     class FanOut < PokemonTiedEffectBase
-      # Create a new Fan Out effect
       # @param logic [Battle::Logic]
       # @param target [PFM::PokemonBattler]
       # @param duration [Integer] Number of turns the effect should last
@@ -110,9 +109,9 @@ module Battle
       end
 
       # Return the specific proceed_internal if the condition is fulfilled
-      # @param user [PFM::PokemonBattler] User of the move
-      # @param target [PFM::PokemonBattler] Target of the move
-      # @param move [Battle::Move] Move
+      # @param user [PFM::PokemonBattler]
+      # @param target [PFM::PokemonBattler]
+      # @param move [Battle::Move]
       # @return [Symbol, nil] :proceed_internal_fan_out or nil
       def specific_proceed_internal(user, targets, move)
         return unless move.one_target?
@@ -131,7 +130,7 @@ module Battle
       private
 
       # Transfer the effect to the given creature via Baton Pass
-      # @param with [PFM::PokemonBattler] The creature switched in
+      # @param with [PFM::PokemonBattler]
       # @return [Battle::Effects::PokemonTiedEffectBase, nil] The effect to give to the switched-in creature, nil if
       #         this effect isn't transferrable via Baton Pass
       def baton_switch_transfer(with)
