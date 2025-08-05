@@ -8,8 +8,8 @@ module Battle
         end
 
         # Function called at the end of an action
-        # @param logic [Battle::Logic] Logic of the battle
-        # @param scene [Battle::Scene] Battle scene
+        # @param logic [Battle::Logic]
+        # @param scene [Battle::Scene]
         # @param battlers [Array<PFM::PokemonBattler>] All alive battlers
         def on_post_action_event(logic, scene, battlers)
           return unless battlers.include?(@target)
