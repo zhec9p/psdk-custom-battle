@@ -30,7 +30,7 @@ module Battle
         return super unless @best_index
 
         modifier = user.send(:"#{STATS_TO_INSPECT[@best_index]}_modifier")
-        modifier = 1 if modifier < 1 && critical_hit?
+        modifier = modifier.clamp(1, Float::INFINITY) if critical_hit?
         return modifier
       end
 
